@@ -2,8 +2,11 @@
 const form = document.querySelector("#note-form");
 const input = document.querySelector("#note-input");
 const categorySelect = document.querySelector("#note-category");
+const errorMessage = document.querySelector("#error-message");
 const list = document.querySelector("#notes-list");
+const count = document.querySelector("#note-count");
 
+const MAX_LENGTH = 200;
 const CATEGORY_LABELS = {
   personal: "Personal",
   work: "Work",
@@ -36,18 +39,33 @@ function createNoteCard(note) {
   del.type = "button";
   del.classList.add("delete-btn");
   del.textContent = "Delete";
+  del.addEventListener("click", () => deleteNote(note.id));
 
   footer.append(label, date, del);
   li.append(text, footer);
   return li;
 }
 
+function countMessage() {
+  if (notes.length === 0) return "You have no notes yet.";
+  if (notes.length === 1) return "You have 1 note.";
+  return `You have ${notes.length} notes.`;
+}
+
 function render() {
   list.replaceChildren();
   notes.forEach((note) => list.appendChild(createNoteCard(note)));
+  count.textContent = countMessage();
 }
 
-// ---------- 4. Adding ----------
+// ---------- 4. Validation ----------
+function validate(text) {
+  if (text === "") return "Please type a note first.";
+  if (text.length > MAX_LENGTH) return "Notes must be 200 characters or fewer.";
+  return "";
+}
+
+// ---------- 5. Adding and deleting ----------
 function addNote(text, category) {
   notes.push({
     id: Date.now(),
@@ -58,12 +76,27 @@ function addNote(text, category) {
   render();
 }
 
-// ---------- 5. Events ----------
+function deleteNote(id) {
+  notes = notes.filter((note) => note.id !== id);
+  render();
+}
+
+// ---------- 6. Events ----------
 form.addEventListener("submit", (event) => {
   event.preventDefault();
-  addNote(input.value.trim(), categorySelect.value);
+  const text = input.value.trim();
+  const error = validate(text);
+
+  errorMessage.textContent = error;
+  if (error !== "") return;
+
+  addNote(text, categorySelect.value);
   input.value = "";
   input.focus();
+});
+
+input.addEventListener("input", () => {
+  errorMessage.textContent = "";
 });
 
 render();
