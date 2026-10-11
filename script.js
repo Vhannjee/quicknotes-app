@@ -6,6 +6,7 @@ const errorMessage = document.querySelector("#error-message");
 const searchInput = document.querySelector("#search-input");
 const list = document.querySelector("#notes-list");
 const count = document.querySelector("#note-count");
+const clearAllBtn = document.querySelector("#clear-all");
 
 const STORAGE_KEY = "quicknotes";
 const MAX_LENGTH = 200;
@@ -112,6 +113,15 @@ function deleteNote(id) {
   render();
 }
 
+function clearAll() {
+  if (notes.length === 0) return;
+  if (confirm("Delete all notes?")) {
+    notes = [];
+    saveNotes();
+    render();
+  }
+}
+
 // ---------- 6. Events ----------
 form.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -129,6 +139,8 @@ form.addEventListener("submit", (event) => {
 input.addEventListener("input", () => {
   errorMessage.textContent = "";
 });
+
+clearAllBtn.addEventListener("click", clearAll);
 
 searchInput.addEventListener("input", () => {
   searchTerm = searchInput.value.trim().toLowerCase();
