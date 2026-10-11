@@ -3,9 +3,11 @@ const form = document.querySelector("#note-form");
 const input = document.querySelector("#note-input");
 const categorySelect = document.querySelector("#note-category");
 const errorMessage = document.querySelector("#error-message");
+const searchInput = document.querySelector("#search-input");
 const list = document.querySelector("#notes-list");
 const count = document.querySelector("#note-count");
 
+const STORAGE_KEY = "quicknotes";
 const MAX_LENGTH = 200;
 const CATEGORY_LABELS = {
   personal: "Personal",
@@ -14,7 +16,21 @@ const CATEGORY_LABELS = {
 };
 
 // ---------- 2. Data ----------
-let notes = [];
+let notes = loadNotes();
+let searchTerm = "";
+
+function loadNotes() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    return Array.isArray(saved) ? saved : [];
+  } catch (error) {
+    return []; // corrupted or missing data: start empty
+  }
+}
+
+function saveNotes() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+}
 
 // ---------- 3. Drawing ----------
 function createNoteCard(note) {
@@ -30,7 +46,7 @@ function createNoteCard(note) {
 
   const label = document.createElement("span");
   label.classList.add("category-label");
-  label.textContent = CATEGORY_LABELS[note.category];
+  label.textContent = CATEGORY_LABELS[note.category] || note.category;
 
   const date = document.createElement("span");
   date.textContent = note.createdAt;
@@ -54,7 +70,20 @@ function countMessage() {
 
 function render() {
   list.replaceChildren();
-  notes.forEach((note) => list.appendChild(createNoteCard(note)));
+
+  const visibleNotes = notes.filter((note) =>
+    note.text.toLowerCase().includes(searchTerm)
+  );
+
+  visibleNotes.forEach((note) => list.appendChild(createNoteCard(note)));
+
+  if (searchTerm !== "" && visibleNotes.length === 0) {
+    const empty = document.createElement("li");
+    empty.classList.add("empty-message");
+    empty.textContent = "No notes match your search.";
+    list.appendChild(empty);
+  }
+
   count.textContent = countMessage();
 }
 
@@ -73,11 +102,13 @@ function addNote(text, category) {
     category: category,
     createdAt: new Date().toLocaleString(),
   });
+  saveNotes();
   render();
 }
 
 function deleteNote(id) {
   notes = notes.filter((note) => note.id !== id);
+  saveNotes();
   render();
 }
 
@@ -97,6 +128,11 @@ form.addEventListener("submit", (event) => {
 
 input.addEventListener("input", () => {
   errorMessage.textContent = "";
+});
+
+searchInput.addEventListener("input", () => {
+  searchTerm = searchInput.value.trim().toLowerCase();
+  render();
 });
 
 render();
